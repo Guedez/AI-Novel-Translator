@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace YourNamespace;
 
-public class TranslateFileBatchContext : ICommand { //TranslateFileBatchContext 20 C:\Translations\Will I End Up As a Hero or a Demon King\152.txt
+public class TranslateFileBatchContext : ICommand { //TranslateFileBatchContext 20 C:\Translations\Will I End Up As a Hero or a Demon King\Raws\164.txt
     private static readonly HttpClient client = new();
     public string ShortHelp => "Attempts to translate a text batching multiple lines using the previous lines as context, with character metadata";
 

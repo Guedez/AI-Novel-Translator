@@ -52,7 +52,7 @@ public class BatchBooklet : ICommand { //BatchBooklet 164 212 "C:\Translations\W
         for (int Current = From; Current < To + 1; Current++) {
             if (!File.Exists($"{Raws}\\{Current}-Translated.txt")) {
                 Console.WriteLine($"Translating file {Raws}\\{Current}.txt");
-                await Main.RunCommand(new[] { "TranslateFileBatchContext", $"20 {Raws}\\{Current}.txt" });
+                await Main.RunCommand(new[] { "TranslateFileBatchContext", $"5 {Raws}\\{Current}.txt" });
             } else {
                 Console.WriteLine($"File {Raws}\\{Current}.txt is already translated");
             }

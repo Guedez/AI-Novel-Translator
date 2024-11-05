@@ -38,12 +38,12 @@ namespace YourNamespace {
         }
 
         public Dictionary<string, ICommand> Commands;
-        public string Model = "qwen2.5-14b-instruct";
+        public string Model = "rombos-llm-v2.6-qwen-14b";
         public string Address = "localhost:1234";
         public string PromptTemplate;
         public int HistorySize = 10;
         public string Knowledge = "";
-           
+
 
         public void DoMain(string[] args) {
             Commands = GetImplementations<ICommand>();

@@ -11,7 +11,6 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="mock:///Dummy.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/32f3c5fbd60f04a2e9843a91626f17753998cadc7bb87ae1e5e35bbfc113129/Math.CoreCLR.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/833e9913cfea894121d36df3dbe63f69583989396ff52191a29aa53a4dd49941/Cast.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/bd1d5c50194fea68ff3559c160230b0ab50f5acf4ce3061bffd6d62958e2182/ExceptionDispatchInfo.cs" root0="SKIP_HIGHLIGHTING" />
@@ -70,16 +69,29 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/TranslateFileBatchContext.cs</url>
-          <line>100</line>
-          <properties documentPath="D:\Workspace\AI novel Translator\TranslateFileBatchContext.cs" initialLine="100" containingFunctionPresentation="method 'TranslateLine'">
+          <line>11</line>
+          <properties documentPath="D:\Workspace\AI novel Translator\TranslateFileBatchContext.cs" initialLine="11" containingFunctionPresentation="method 'Execute'">
             <startOffsets>
-              <option value="4931" />
+              <option value="535" />
             </startOffsets>
             <endOffsets>
-              <option value="5015" />
+              <option value="569" />
             </endOffsets>
           </properties>
-          <option name="timeStamp" value="2" />
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/TranslateFileBatchContext.cs</url>
+          <line>29</line>
+          <properties documentPath="D:\Workspace\AI novel Translator\TranslateFileBatchContext.cs" initialLine="29" containingFunctionPresentation="method 'Execute'">
+            <startOffsets>
+              <option value="1497" />
+            </startOffsets>
+            <endOffsets>
+              <option value="1529" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="7" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

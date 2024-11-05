@@ -3,8 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace YourNamespace;
 
-//265 303
-public class BatchBooklet : ICommand { //BatchBooklet 265 303 "C:\Translations\Will I End Up As a Hero or a Demon King\Raws" "C:\Translations\Will I End Up As a Hero or a Demon King\Volume 9.txt"
+public class BatchTerms : ICommand { //BatchTerms 265 303 "C:\Translations\Will I End Up As a Hero or a Demon King\Raws" "C:\Translations\Will I End Up As a Hero or a Demon King\Terminology.txt"
     public string ShortHelp => "Runs multiple commands to generate a booklet after translating multiple files";
 
     public static (int, int, string, string) SplitParams(string paramString) {
@@ -49,36 +48,38 @@ public class BatchBooklet : ICommand { //BatchBooklet 265 303 "C:\Translations\W
             Console.WriteLine($"Attempting to save an invalid file");
             return;
         }
-        StringBuilder Booklet = new StringBuilder();
+        Dictionary<string, HashSet<string>> translations = new Dictionary<string, HashSet<string>>();
         for (int Current = From; Current < To + 1; Current++) {
-            if (!File.Exists($"{Raws}\\{Current}-Translated.txt")) {
-                Console.WriteLine($"Translating file {Raws}\\{Current}.txt");
-                await Main.RunCommand(new[] { "TranslateFileBatchContext", $"20 {Raws}\\{Current}.txt" });
+            if (!File.Exists($"{Raws}\\{Current}-Terms.txt")) {
+                Console.WriteLine($"Extracting terms from {Raws}\\{Current}.txt");
+                await Main.RunCommand(new[] { "FindTermsInFileBatchContext", $"20 {Raws}\\{Current}.txt" });
             } else {
-                Console.WriteLine($"File {Raws}\\{Current}.txt is already translated");
+                Console.WriteLine($"File {Raws}\\{Current}.txt is already extracted");
             }
-            if (Booklet.Length > 0) {
-                Booklet.Append("\n\n\n\n###");
-            } else {
-                Booklet.Append("###");
+            FindTermsInFileBatchContext.DeserializeTranslations(translations, File.ReadAllText($"{Raws}\\{Current}-Terms.txt"));
+        }
+        StringBuilder NewTerms = new StringBuilder();
+
+        string directory = Path.GetDirectoryName(Raws);
+        if (File.Exists($"{directory}/.KNOWLEDGE")) {
+            HashSet<string> KeyDictionary = new HashSet<string>();
+            Main.Knowledge = File.ReadAllText($"{directory}/.KNOWLEDGE");
+            string[] _Terms = Main.Knowledge.Split("\n");
+            for (int i = 0; i < _Terms.Length; i++) {
+                string trim = _Terms[i].Trim();
+                if (trim.Length == 0) continue;
+                string[] KV = trim.Split(" ", 2);
+                KeyDictionary.Add(KV[0]);
             }
-            Booklet.Append(File.ReadAllText($"{Raws}\\{Current}-Translated.txt"));
+            foreach (KeyValuePair<string, HashSet<string>> Proposed in translations) {
+                if (!KeyDictionary.Contains(Proposed.Key)) {
+                    NewTerms.AppendLine($"{Proposed.Key} | {string.Join(" | ", Proposed.Value)}");
+                }
+            }
         }
 
-        File.WriteAllText(FileOut, ReplaceSpecialCharacters(Booklet.ToString())); //—–「.」…▽♪.Replace("—", "-").Replace("–", "-")
+        File.WriteAllText(FileOut, NewTerms.ToString());
 
         Console.WriteLine($"Generated booklet at {FileOut}");
-    }
-
-    private static string ReplaceSpecialCharacters(string extractedContent) {
-        return extractedContent
-            .Replace("」", "\"").Replace("「", "\"")
-            .Replace("』", "*").Replace("『", "*")
-            .Replace("（", "(").Replace("）", ")")
-            .Replace("【", "[").Replace("】", "]")
-            .Replace("—", "-").Replace("–", "-")
-            .Replace(".", ".").Replace("…", "...")
-            .Replace("▽", "v").Replace("♪", "~*")
-            .Replace("―", "-").Replace("ー", "-");
     }
 }

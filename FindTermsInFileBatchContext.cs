@@ -4,9 +4,9 @@ using System.Text.RegularExpressions;
 
 namespace YourNamespace;
 
-public class TranslateFileBatchContext : ICommand { //TranslateFileBatchContext 20 C:\Translations\Will I End Up As a Hero or a Demon King\Raws\213.txt
+public class FindTermsInFileBatchContext : ICommand { //FindTermsInFileBatchContext 20 C:\Translations\Will I End Up As a Hero or a Demon King\Raws\164.txt
     private static readonly HttpClient client = new();
-    public string ShortHelp => "Attempts to translate a text batching multiple lines using the previous lines as context, with character metadata";
+    public string ShortHelp => "Find specific names and terms in the selected text";
 
     public async Task Execute(Program Main, string Params) {
         string[] P = Params.Split(" ", 2);
@@ -16,28 +16,9 @@ public class TranslateFileBatchContext : ICommand { //TranslateFileBatchContext 
         }
         string Text = File.ReadAllText(P[1]);
         string directory = Path.GetDirectoryName(P[1]);
-        if (File.Exists($"{directory}/.KNOWLEDGE")) {
-            List<(string, string)> KeyDictionary = new List<(string, string)>();
-            Main.Knowledge = File.ReadAllText($"{directory}/.KNOWLEDGE");
-            string[] _Terms = Main.Knowledge.Split("\n");
-            for (int i = 0; i < _Terms.Length; i++) {
-                try {
-                    string trim = _Terms[i].Trim();
-                    if (trim.Length == 0) continue;
-                    string[] KV = trim.Split(" ", 2);
-                    KeyDictionary.Add((KV[0], KV[1]));
-                } catch (Exception E) {
-                    Console.WriteLine(E.ToString());
-                }
-            }
-            (string, string)[] Terms = KeyDictionary.OrderByDescending(T => T.Item1.Length).ToArray();
 
-            foreach (var term in Terms) {
-                Text = Regex.Replace(Text, Regex.Escape(term.Item1), term.Item2);
-            }
-        }
-        if (File.Exists($"{directory}/.PROMPT")) {
-            Main.PromptTemplate = File.ReadAllText($"{directory}/.PROMPT");
+        if (File.Exists($"{directory}/TERMS.PROMPT")) {
+            Main.PromptTemplate = File.ReadAllText($"{directory}/TERMS.PROMPT");
         }
         string[] lines = Text.Split("\n");
         List<string> Paragraphs = new List<string>();
@@ -83,8 +64,61 @@ public class TranslateFileBatchContext : ICommand { //TranslateFileBatchContext 
         }
 
         await Main.LoadingBarFor(Lines);
+        Dictionary<string, HashSet<string>> Terms = new Dictionary<string, HashSet<string>>();
+        foreach (string line in OutputLines) {
+            ParseTranslations(Terms, line);
+        }
+        string T = SerializeTranslations(Terms);
+        File.WriteAllText(AddTermsToFileName(P[1]), T);
+    }
 
-        File.WriteAllLines(AddTranslatedToFileName(P[1]), OutputLines);
+    public static string SerializeTranslations(Dictionary<string, HashSet<string>> translations) {
+        var sb = new StringBuilder();
+
+        foreach (var entry in translations) {
+            foreach (var translation in entry.Value) {
+                sb.AppendLine($"{entry.Key} | {translation}");
+            }
+        }
+
+        return sb.ToString().TrimEnd(); // Remove any trailing newline
+    }
+
+    public static void DeserializeTranslations(Dictionary<string, HashSet<string>> translations, string serialized) {
+        var lines = serialized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var line in lines) {
+            var parts = line.Split('|');
+            if (parts.Length != 2) continue;
+
+            string japanese = parts[0].Trim();
+            string translation = parts[1].Trim();
+
+            if (!translations.ContainsKey(japanese)) {
+                translations[japanese] = new HashSet<string>();
+            }
+            translations[japanese].Add(translation);
+        }
+    }
+
+    private void ParseTranslations(Dictionary<string, HashSet<string>> Terms, string input) {
+        // Split input by lines
+        var lines = input.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var line in lines) {
+            // Split each line by '|'
+            var parts = line.Split('|');
+            if (parts.Length != 2) continue; // Ignore malformed lines
+
+            string japanese = parts[0].Trim();
+            string translation = parts[1].Trim();
+
+            // Add to dictionary
+            if (!Terms.ContainsKey(japanese)) {
+                Terms[japanese] = new HashSet<string>();
+            }
+            Terms[japanese].Add(translation);
+        }
     }
 
     public async Task TranslateLine(SemaphoreSlim Semaphore, Program Main, List<string> WorkBatches, string[] Output, int LineIndex) {
@@ -98,12 +132,6 @@ public class TranslateFileBatchContext : ICommand { //TranslateFileBatchContext 
 
             var contentStartIndex = responseContent.IndexOf("content\": ", StringComparison.Ordinal) + 11;
             var extractedContent = responseContent[(contentStartIndex)..].Split("\"\n")[0];
-            // if (extractedContent.Contains("\\n")) {
-            //     Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
-            //     Console.WriteLine($"Line {LineIndex} did not properly translate. Using original text: {Lines[LineIndex]}.");
-            //     Console.WriteLine($"Failed text: {ReplaceSpecialCharacters(extractedContent)}.");
-            //     Output[LineIndex] = Lines[LineIndex];
-            // } else {
             Output[LineIndex] = ReplaceSpecialCharacters(extractedContent).Replace("\\n", "\n");
             // }
         } finally {
@@ -113,40 +141,23 @@ public class TranslateFileBatchContext : ICommand { //TranslateFileBatchContext 
 
     private static string ReplaceSpecialCharacters(string extractedContent) {
         return extractedContent
-            // .Replace("」", "\"").Replace("「", "\"")
-            // .Replace("』", "\"").Replace("『", "\"")
-            // .Replace("（", "(").Replace("）", ")")
-            // .Replace("【", "[").Replace("】", "]")
-            // .Replace("―", "-").Replace("ー", "-")
             .Replace("\r", "").Replace("###", "").Replace("\\n", "\n").Replace("\\\"", "\"") + "\n";
     }
 
     public string CreateJson(Program Main, string Batch, string Model) {
         string Text = Main.PromptTemplate;
-        // Text = Text.Replace("<<KNOWLEDGE>>", Main.Knowledge);
-        // if (Text.Contains("<<HISTORY>>")) {
-        //     string History = "";
-        //     int startIndex = Math.Max(0, LineIndex - Main.HistorySize);
-        //     for (int i = startIndex; i < LineIndex; i++) {
-        //         History += lines[i];
-        //     }
-        //
-        //     Text = Text.Replace("<<HISTORY>>", History);
-        // }
         Text = Text.Replace("<<TEXT>>", Batch);
-        //Text = Text.Replace("\r", "");
-        //Text = Text.Replace("\"", "\\\"");
         return "{\"messages\":[{\"role\":\"user\",\"content\":\"" + Text + "\"}],\"model\":\"" + Model + "\"}";
     }
 
-    static string AddTranslatedToFileName(string filePath) {
+    static string AddTermsToFileName(string filePath) {
         // Get the directory, file name without extension, and extension
         string directory = Path.GetDirectoryName(filePath);
         string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
         string extension = Path.GetExtension(filePath);
 
         // Create the new filename
-        string newFileName = $"{fileNameWithoutExtension}-Translated{extension}";
+        string newFileName = $"{fileNameWithoutExtension}-Terms{extension}";
 
         // Combine with the original directory
         return Path.Combine(directory, newFileName);
